@@ -108,7 +108,7 @@ def main(args):
     criterion = nn.CrossEntropyLoss()
 
     ## TASK 11: Define the optimizer
-    optimizer = None
+    optimizer = torch.optim.SGD(model.parameters(), lr = args.learning_rate)
 
     log_dir = get_summary_writer_log_dir(args)
     print(f"Writing logs to {log_dir}")
@@ -237,7 +237,12 @@ class Trainer:
 
                 ## TASK 10: Compute the backward pass
 
+                loss.backward()
+
                 ## TASK 12: Step the optimizer and then zero out the gradient buffers.
+
+                self.optimizer.step()
+                self.optimizer.zero_grad()
 
                 with torch.no_grad():
                     preds = logits.argmax(-1)
