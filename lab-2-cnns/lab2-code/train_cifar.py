@@ -105,7 +105,7 @@ def main(args):
     model = CNN(height=32, width=32, channels=3, class_count=10)
 
     ## TASK 8: Redefine the criterion to be softmax cross entropy
-    criterion = lambda logits, labels: torch.tensor(0)
+    criterion = nn.CrossEntropyLoss()
 
     ## TASK 11: Define the optimizer
     optimizer = None
@@ -144,20 +144,38 @@ class CNN(nn.Module):
         )
         self.initialise_layer(self.conv1)
         self.pool1 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+        print(self.input_shape.channels)
         ## TASK 2-1: Define the second convolutional layer and initialise its parameters
+        self.conv2 = nn.Conv2d(
+            in_channels=32,
+            out_channels=64,
+            kernel_size=(5, 5),
+            padding=(2, 2),
+        )
+        self.initialise_layer(self.conv2)
         ## TASK 3-1: Define the second pooling layer
+        self.pool2 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
         ## TASK 5-1: Define the first FC layer and initialise its parameters
+        self.fc1 = nn.Linear(4096, 1024)
+        self.initialise_layer(self.fc1)
         ## TASK 6-1: Define the last FC layer and initialise its parameters
+        self.fc2 = nn.Linear(1024, 10)
+        self.initialise_layer(self.fc2)
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.conv1(images))
         x = self.pool1(x)
         ## TASK 2-2: Pass x through the second convolutional layer
+        x = F.relu(self.conv2(x))
         ## TASK 3-2: Pass x through the second pooling layer
+        x = self.pool2(x)
         ## TASK 4: Flatten the output of the pooling layer so it is of shape
         ##         (batch_size, 4096)
+        x = torch.flatten(x, 1)
         ## TASK 5-2: Pass x through the first fully connected layer
+        x = F.relu(self.fc1(x))
         ## TASK 6-2: Pass x through the last fully connected layer
+        x = self.fc2(x)
         return x
 
     @staticmethod
@@ -208,14 +226,14 @@ class Trainer:
 
                 ## TASK 1: Compute the forward pass of the model, print the output shape
                 ##         and quit the program
-                #output =
+                logits = self.model.forward(batch)
 
                 ## TASK 7: Rename `output` to `logits`, remove the output shape printing
                 ##         and get rid of the `import sys; sys.exit(1)`
 
                 ## TASK 9: Compute the loss using self.criterion and
                 ##         store it in a variable called `loss`
-                loss = torch.tensor(0)
+                loss = self.criterion(logits, labels)
 
                 ## TASK 10: Compute the backward pass
 
