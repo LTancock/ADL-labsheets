@@ -110,6 +110,7 @@ def main(args):
 
     ## TASK 11: Define the optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.sgd_momentum)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=10)
 
     log_dir = get_summary_writer_log_dir(args)
     print(f"Writing logs to {log_dir}")
@@ -118,7 +119,7 @@ def main(args):
             flush_secs=5
     )
     trainer = Trainer(
-        model, train_loader, test_loader, criterion, optimizer, summary_writer, DEVICE
+        model, train_loader, test_loader, criterion, optimizer, summary_writer, DEVICE, scheduler
     )
 
     trainer.train(
@@ -199,6 +200,7 @@ class Trainer:
         optimizer: Optimizer,
         summary_writer: SummaryWriter,
         device: torch.device,
+        scheduler: torch.optim
     ):
         self.model = model.to(device)
         self.device = device
@@ -208,6 +210,7 @@ class Trainer:
         self.optimizer = optimizer
         self.summary_writer = summary_writer
         self.step = 0
+        self.scheduler = scheduler
 
     def train(
         self,
@@ -267,6 +270,7 @@ class Trainer:
                 # self.validate() will put the model in validation mode,
                 # so we have to switch back to train mode afterwards
                 self.model.train()
+            self.scheduler.step()
 
     def print_metrics(self, epoch, accuracy, loss, data_load_time, step_time):
         epoch_step = self.step % len(self.train_loader)
@@ -358,7 +362,7 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         from getting logged to the same TB log directory (which you can't easily
         untangle in TB).
     """
-    tb_log_dir_prefix = f'CNN_bn_bs={args.batch_size}_lr={args.learning_rate}_momentum=0.9_run_'
+    tb_log_dir_prefix = f'CNN_bn_bs={args.batch_size}_lr={args.learning_rate}_momentum=0.9_slr_run_'
     i = 0
     while i < 1000:
         tb_log_dir = args.log_dir / (tb_log_dir_prefix + str(i))
